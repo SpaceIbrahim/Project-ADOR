@@ -14,7 +14,7 @@ pip install --upgrade pip
 
 echo "Installing project dependencies..."
 # Installs MuJoCo, RL framework, and vision processing libraries
-pip install mujoco mujoco-menagerie torch torchvision opencv-python
+pip install mujoco mujoco-menagerie torch torchvision opencv-python dm_control
 
 echo "Environment setup complete. To activate it manually from the project root, run:"
 echo "source drawer_env/bin/activate"

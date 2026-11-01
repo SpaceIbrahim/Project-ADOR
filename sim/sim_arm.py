@@ -1,26 +1,24 @@
 import time
 import mujoco
 import mujoco.viewer
-import mujoco_menagerie as mm
 
-# 1. Get the editable specifications for both models
-arm_spec = mm.get('kinova_gen3').spec()
-gripper_spec = mm.get('robotiq_2f85').spec()
+# Gen3 Lite xml files
+arm_spec = mujoco.MjSpec.from_file('model/kinova_gen3_lite/gen3_lite.xml')
 
-# 2. Locate the mounting point on the Kinova arm
-mounting_site = arm_spec.find_site('attachment_site')
-
-# 3. Attach the gripper to the arm's site
-arm_spec.attach(gripper_spec, site=mounting_site, prefix='gripper_')
-
-# 4. Compile the combined specification into a runnable model
 model = arm_spec.compile()
 data = mujoco.MjData(model)
 
-# Launch the passive interactive viewer
+# Start in the 'home' pose so the arm doesn't collapse under gravity
+mujoco.mj_resetDataKeyframe(model, data, model.key('home').id)
+
+# Synchronize the motor targets with the current physical joint positions
+data.ctrl[:model.nu] = data.qpos[:model.nu]
+
 with mujoco.viewer.launch_passive(model, data) as viewer:
-    print("Viewer started. Press ESC to close.")
     while viewer.is_running():
+        step_start = time.time()
         mujoco.mj_step(model, data)
         viewer.sync()
-        time.sleep(model.opt.timestep)
+        dt = model.opt.timestep - (time.time() - step_start)
+        if dt > 0:
+            time.sleep(dt)
